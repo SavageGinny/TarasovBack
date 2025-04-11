@@ -19,8 +19,6 @@ class Subcategory(models.Model):
         app_label = 'CashFlow'
         managed = False
 
-    def subcategoy_on_category(self, category):
-        return Subcategory.objects.get(category = Category.objects.get(name = category).id)
 
 
 class Status(models.Model):
@@ -64,18 +62,3 @@ class Logs(models.Model):
         db_table = 'Log'
         app_label = 'CashFlow'
         managed = False
-
-    def status_name(self):
-        return self.status.name  # Доступ к связанному объекту
-
-    def type_name(self):
-        return self.type.name
-
-    def category_name(self):
-        return self.category.name
-
-    def subcategory_name(self):
-        return self.subcategory.name
-
-    def comment_content(self):
-        return self.comment.content
