@@ -1,0 +1,120 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Движение денежных средств</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    {{ form.media }}  <!-- подключает Select2Widget стили/скрипты -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body class="p-4">
+
+    <h1 class="mb-4">Движение денежных средств</h1>
+    <div class="mb-3">
+        <a href="{% url 'add_log' %}" class="btn btn-primary">Добавить запись</a>
+        <a href="{% url 'add_dictionary' %}" class="btn btn-secondary">Пополнить справочник</a>
+    </div>
+    <form method="get" class="row gy-2 gx-3 align-items-end mb-4">
+        <div class="col-md-2">
+            {{ form.status.label_tag }}
+            {{ form.status }}
+        </div>
+        <div class="col-md-2">
+            {{ form.type.label_tag }}
+            {{ form.type }}
+        </div>
+        <div class="col-md-2">
+            {{ form.category.label_tag }}
+            {{ form.category }}
+        </div>
+        <div class="col-md-2">
+            {{ form.subcategory.label_tag }}
+            {{ form.subcategory }}
+        </div>
+        <div class="col-md-2">
+            {{ form.start_date.label_tag }}
+            {{ form.start_date }}
+        </div>
+        <div class="col-md-2">
+            {{ form.end_date.label_tag }}
+            {{ form.end_date }}
+        </div>
+
+        <div class="col-12 mt-2">
+            <button type="submit" class="btn btn-primary">Применить фильтр</button>
+            <a href="{% url 'main' %}" class="btn btn-secondary ms-2">Сбросить</a>
+        </div>
+    </form>
+
+    {% if logs %}
+    <table class="table table-bordered table-striped">
+        <thead class="table-dark">
+            <tr>
+                <th>Дата</th>
+                <th>Статус</th>
+                <th>Тип</th>
+                <th>Категория</th>
+                <th>Подкатегория</th>
+                <th>Сумма</th>
+                <th>Комментарий</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for log in logs %}
+                <tr>
+                    <td>{{ log.date }}</td>
+                    <td>{{ log.status }}</td>
+                    <td>{{ log.type }}</td>
+                    <td>{{ log.category }}</td>
+                    <td>{{ log.subcategory }}</td>
+                    <td>{{ log.amount }}</td>
+                    <td>{{ log.comment }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+        <p>Нет записей по заданным фильтрам.</p>
+    {% endif %}
+
+    <script>
+        $(document).ready(function () {
+            // При изменении категории
+            $('#id_category').change(function () {
+                var categoryName = $(this).val(); // Получаем выбранную категорию
+
+                if (categoryName) {
+                    // Если категория выбрана, отправляем запрос для получения подкатегорий
+                    $.ajax({
+                        url: '{% url "get_subcategories" %}', // URL для запроса
+                        data: {
+                            'category_name': categoryName
+                        },
+                        success: function (data) {
+                            var subcategorySelect = $('#id_subcategory');
+                            subcategorySelect.empty();  // Очищаем старые подкатегории
+
+                            // Добавляем default option
+                            subcategorySelect.append('<option value="">--- Выберите подкатегорию ---</option>');
+
+                            // Заполняем новыми подкатегориями
+                            $.each(data.subcategories, function (index, subcategory) {
+                                subcategorySelect.append('<option value="' + subcategory.id + '">' + subcategory.name + '</option>');
+                            });
+                        },
+                        error: function () {
+                            alert('Ошибка загрузки подкатегорий!');
+                        }
+                    });
+                } else {
+                    // Если категория не выбрана, очищаем подкатегории
+                    $('#id_subcategory').empty();
+                    $('#id_subcategory').append('<option value="">--- Выберите подкатегорию ---</option>');
+                }
+            });
+        });
+    </script>
+
+</body>
+</html>

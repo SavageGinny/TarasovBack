@@ -1,0 +1,99 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Добавить объект в справочник</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    {{ form.media }}  <!-- Подключает Select2Widget стили/скрипты -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body class="p-4">
+
+    <h1 class="mb-4">Добавить объект в справочник</h1>
+
+    <div class="mb-3">
+        <a href="{% url 'main' %}" class="btn btn-secondary">Назад</a>
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+        <div class="row gy-2 gx-3 align-items-end mb-4">
+            <div class="col-md-4">
+                {{ form.object_type.label_tag }}
+                {{ form.object_type }}
+            </div>
+            <div class="col-md-4">
+                {{ form.name.label_tag }}
+                {{ form.name }}
+            </div>
+
+            <!-- Поле категории показывается только если выбран тип 'subcategory' -->
+            <div class="col-md-4" id="category-field" style="display: none;">
+                {{ form.category.label_tag }}
+                {{ form.category }}
+            </div>
+        </div>
+
+        <div class="col-12 mt-2">
+            <button type="submit" class="btn btn-primary">Добавить</button>
+            <a href="{% url 'main' %}" class="btn btn-secondary ms-2">Назад</a>
+        </div>
+    </form>
+
+    <script>
+        $(document).ready(function () {
+            // Обработчик изменения типа объекта для динамической загрузки категории
+            $('#id_object_type').change(function () {
+                var objectType = $(this).val();
+                console.log("Выбран тип объекта: ", objectType);  // Проверка
+
+                // Если выбран тип "подкатегория", показываем поле для категории
+                if (objectType === 'subcategory') {
+                    $('#category-field').show();  // Показываем поле категории
+                } else {
+                    $('#category-field').hide();  // Скрываем поле категории
+                }
+            });
+
+            // Инициализация отображения категории при загрузке страницы
+            if ($('#id_object_type').val() === 'subcategory') {
+                $('#category-field').show();  // Показываем поле категории, если выбран тип "подкатегория"
+            }
+
+            // Обработка отправки формы
+            $('#submit-btn').click(function () {
+                const objectType = $('#id_object_type').val();  // тип объекта: status/type/category/subcategory
+                let formData = {
+                    name: $('#id_name').val(),
+                };
+
+                // Добавляем category только если выбран subcategory
+                if (objectType === 'subcategory') {
+                    formData['category'] = $('#id_category').val();  // <-- передаем ID категории
+                }
+
+                $.ajax({
+                    url: `/api/add_${objectType}/`,  // например: /api/add_subcategory/
+                    type: 'POST',
+                    data: JSON.stringify(formData),
+                    contentType: 'application/json',
+                    headers: {
+                        'X-CSRFToken': $('input[name="csrfmiddlewaretoken"]').val()
+                    },
+                    success: function (response) {
+                        alert(`${objectType} успешно добавлен!`);
+                        window.location.reload();
+                    },
+                    error: function (xhr, status, error) {
+                        alert('Ошибка при добавлении. Проверьте поля.');
+                        console.error(xhr.responseText);
+                    }
+                });
+            });
+        });
+    </script>
+
+
+</body>
+</html>
