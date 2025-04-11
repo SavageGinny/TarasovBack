@@ -188,7 +188,7 @@ class CreateLogForm(forms.Form):
     def get_comment_choices():
         # Получаем список комментариев для выбора
         comments = Comments.objects.all()
-        return [("", "--- Выберите комментарий ---")] + [(c.id, c.content) for c in comments]
+        return [("", "--- Выберите комментарий ---")] + [(c.content, c.content) for c in comments]
 
 
 from django import forms

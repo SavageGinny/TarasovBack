@@ -2,6 +2,9 @@ from django.shortcuts import render, redirect
 from django.http import JsonResponse
 from django.contrib import messages
 
+from urllib.parse import urlencode
+import requests
+
 from .forms import *
 from .models import *
 
@@ -49,9 +52,6 @@ def main_view(request):
             params['end_date'] = cleaned['end_date']
 
     # Запрос к API
-    from urllib.parse import urlencode
-    import requests
-
     query_string = urlencode(params)
     api_url = f"http://localhost:8000/api/logs/?{query_string}"
     response = requests.get(api_url)

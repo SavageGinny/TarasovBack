@@ -1,8 +1,11 @@
 from django.db import models
 
-# Create your models here.
 class Category(models.Model):
-    name = models.CharField(max_length=255, unique=True)
+    """Категория (например, Продукты, Транспорт)."""
+    name: str = models.CharField(max_length=255, unique=True)
+
+    def __str__(self) -> str:
+        return self.name
 
     class Meta:
         db_table = 'Category'
@@ -11,8 +14,12 @@ class Category(models.Model):
 
 
 class Subcategory(models.Model):
-    name = models.CharField(max_length=255, unique=True)
-    category = models.ForeignKey(Category, on_delete=models.CASCADE)
+    """Подкатегория, привязанная к категории (например, Магазин у дома)."""
+    name: str = models.CharField(max_length=255, unique=True)
+    category: Category = models.ForeignKey(Category, on_delete=models.CASCADE)
+
+    def __str__(self) -> str:
+        return f"{self.name} ({self.category.name})"
 
     class Meta:
         db_table = 'Subcategory'
@@ -20,9 +27,12 @@ class Subcategory(models.Model):
         managed = False
 
 
-
 class Status(models.Model):
-    name = models.CharField(max_length=255, unique=True)
+    """Статус операции (например, Завершено, В ожидании)."""
+    name: str = models.CharField(max_length=255, unique=True)
+
+    def __str__(self) -> str:
+        return self.name
 
     class Meta:
         db_table = 'Status'
@@ -31,7 +41,11 @@ class Status(models.Model):
 
 
 class Type(models.Model):
-    name = models.CharField(max_length=255, unique=True)
+    """Тип операции (например, Доход, Расход)."""
+    name: str = models.CharField(max_length=255, unique=True)
+
+    def __str__(self) -> str:
+        return self.name
 
     class Meta:
         db_table = 'Type'
@@ -40,7 +54,11 @@ class Type(models.Model):
 
 
 class Comments(models.Model):
-    content = models.CharField(max_length=255, unique=True)
+    """Комментарий к записи."""
+    content: str = models.CharField(max_length=255, unique=True)
+
+    def __str__(self) -> str:
+        return self.content
 
     class Meta:
         db_table = 'Comments'
@@ -48,15 +66,18 @@ class Comments(models.Model):
         managed = False
 
 
-
 class Logs(models.Model):
-    date = models.DateField()
-    status = models.ForeignKey(Status, on_delete=models.CASCADE)
-    type = models.ForeignKey(Type, on_delete=models.CASCADE)
-    category = models.ForeignKey(Category, on_delete=models.CASCADE)
-    subcategory = models.ForeignKey(Subcategory, on_delete=models.CASCADE)
-    amount = models.IntegerField()
-    comment = models.ForeignKey(Comments, on_delete=models.CASCADE)
+    """Основная таблица записей ДДС."""
+    date: models.DateField = models.DateField()
+    status: Status = models.ForeignKey(Status, on_delete=models.CASCADE)
+    type: Type = models.ForeignKey(Type, on_delete=models.CASCADE)
+    category: Category = models.ForeignKey(Category, on_delete=models.CASCADE)
+    subcategory: Subcategory = models.ForeignKey(Subcategory, on_delete=models.CASCADE)
+    amount: int = models.IntegerField()
+    comment: Comments = models.ForeignKey(Comments, on_delete=models.CASCADE)
+
+    def __str__(self) -> str:
+        return f"{self.date} - {self.amount} ({self.category.name} / {self.subcategory.name})"
 
     class Meta:
         db_table = 'Log'

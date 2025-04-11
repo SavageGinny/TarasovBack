@@ -137,14 +137,78 @@ def log_create(request: HttpRequest) -> Response:
 @permission_classes([AllowAny])
 def log_update(request: HttpRequest, pk: int) -> Response:
     """
-    Обновляет лог по его ID.
+    Обновление записи лога по его ID с возможностью изменения всех параметров.
     """
-    log = get_object_or_404(Logs, pk=pk)
-    serializer = LogSerializer(log, data=request.data)
+    try:
+        log = Logs.objects.get(pk=pk)
+    except Logs.DoesNotExist:
+        logger.error(f"Log with ID '{pk}' not found")
+        return Response({"error": f"Log with ID '{pk}' not found"}, status=404)
+
+    category_name = request.data.get('category', log.category.name)
+    subcategory_name = request.data.get('subcategory', log.subcategory.name)
+    status_name = request.data.get('status', log.status.name)
+    type_name = request.data.get('type', log.type.name)
+    amount = request.data.get('amount', log.amount)
+    comment_text = request.data.get('comment', log.comment.content)
+    date = request.data.get('date', log.date)
+
+    logger.debug(f"Received data for update: {request.data}")
+
+    try:
+        category = Category.objects.get(name=category_name)
+    except Category.DoesNotExist:
+        logger.error(f"Category '{category_name}' not found")
+        return Response({"error": f"Category '{category_name}' not found"}, status=401)
+
+    try:
+        subcategory = Subcategory.objects.get(id=subcategory_name)
+    except Subcategory.DoesNotExist:
+        logger.error(f"Subcategory '{subcategory_name}' not found")
+        return Response({"error": f"Subcategory '{subcategory_name}' not found"}, status=402)
+
+    try:
+        status = Status.objects.get(name=status_name)
+    except Status.DoesNotExist:
+        logger.error(f"Status '{status_name}' not found")
+        return Response({"error": f"Status '{status_name}' not found"}, status=403)
+
+    try:
+        type = Type.objects.get(name=type_name)
+    except Type.DoesNotExist:
+        logger.error(f"Type '{type_name}' not found")
+        return Response({"error": f"Type '{type_name}' not found"}, status=405)
+
+    comment_id = None
+    if comment_text:
+        try:
+            comment_instance = Comments.objects.get(content=comment_text)
+            comment_id = comment_instance.id
+        except Comments.DoesNotExist:
+            new_comment = Comments.objects.create(content=comment_text)
+            comment_id = new_comment.id
+            logger.debug(f"Created new comment with ID: {comment_id}")
+
+    log_data = {
+        "date": date,
+        "status": status.id,
+        "type": type.id,
+        "category": category.id,
+        "subcategory": subcategory.id,
+        "amount": amount,
+        "comment": comment_id
+    }
+
+    serializer = PostLogSerializer(log, data=log_data)
     if serializer.is_valid():
-        serializer.save()
-        return Response(serializer.data)
+        with transaction.atomic():
+            serializer.save()
+        logger.debug(f"Log entry with ID {pk} updated successfully")
+        return Response(serializer.data, status=200)
+
+    logger.error(f"Validation error: {serializer.errors}")
     return Response(serializer.errors, status=400)
+
 
 @api_view(['DELETE'])
 @permission_classes([AllowAny])
@@ -199,6 +263,115 @@ def add_subcategory(request: HttpRequest) -> Response:
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['PUT'])
+def update_status(request: HttpRequest, pk: int) -> Response:
+    """
+    Обновление существующего статуса по его ID.
+    """
+    try:
+        status = Status.objects.get(pk=pk)
+    except Status.DoesNotExist:
+        return Response({"error": f"Status with ID '{pk}' not found"}, status=404)
+
+    serializer = StatusSerializer(status, data=request.data)
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['PUT'])
+def update_type(request: HttpRequest, pk: int) -> Response:
+    """
+    Обновление существующего типа по его ID.
+    """
+    try:
+        type = Type.objects.get(pk=pk)
+    except Type.DoesNotExist:
+        return Response({"error": f"Type with ID '{pk}' not found"}, status=404)
+
+    serializer = TypeSerializer(type, data=request.data)
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['PUT'])
+def update_category(request: HttpRequest, pk: int) -> Response:
+    """
+    Обновление существующей категории по её ID.
+    """
+    try:
+        category = Category.objects.get(pk=pk)
+    except Category.DoesNotExist:
+        return Response({"error": f"Category with ID '{pk}' not found"}, status=404)
+
+    serializer = CategorySerializer(category, data=request.data)
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['PUT'])
+def update_subcategory(request: HttpRequest, pk: int) -> Response:
+    """
+    Обновление существующей подкатегории по её ID.
+    """
+    try:
+        subcategory = Subcategory.objects.get(pk=pk)
+    except Subcategory.DoesNotExist:
+        return Response({"error": f"Subcategory with ID '{pk}' not found"}, status=404)
+
+    serializer = SubcategorySerializer(subcategory, data=request.data)
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['DELETE'])
+@permission_classes([AllowAny])
+def delete_status(request: HttpRequest, pk: int) -> Response:
+    """
+    Удаляет статус по его ID.
+    """
+    status_instance = get_object_or_404(Status, pk=pk)
+    status_instance.delete()
+    return Response({'message': 'Status deleted successfully'}, status=204)
+
+@api_view(['DELETE'])
+@permission_classes([AllowAny])
+def delete_type(request: HttpRequest, pk: int) -> Response:
+    """
+    Удаляет тип по его ID.
+    """
+    type_instance = get_object_or_404(Type, pk=pk)
+    type_instance.delete()
+    return Response({'message': 'Type deleted successfully'}, status=204)
+
+@api_view(['DELETE'])
+@permission_classes([AllowAny])
+def delete_category(request: HttpRequest, pk: int) -> Response:
+    """
+    Удаляет категорию по её ID.
+    """
+    category_instance = get_object_or_404(Category, pk=pk)
+    category_instance.delete()
+    return Response({'message': 'Category deleted successfully'}, status=204)
+
+@api_view(['DELETE'])
+@permission_classes([AllowAny])
+def delete_subcategory(request: HttpRequest, pk: int) -> Response:
+    """
+    Удаляет подкатегорию по её ID.
+    """
+    subcategory_instance = get_object_or_404(Subcategory, pk=pk)
+    subcategory_instance.delete()
+    return Response({'message': 'Subcategory deleted successfully'}, status=204)
+
 
 @api_view(['POST'])
 def add_object(request: HttpRequest) -> Response:

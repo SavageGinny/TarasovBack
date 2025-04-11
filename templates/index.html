@@ -70,6 +70,12 @@
                     <td>{{ log.subcategory }}</td>
                     <td>{{ log.amount }}</td>
                     <td>{{ log.comment }}</td>
+                    <td>
+                        <!-- Кнопка редактирования -->
+                        <a href="{% url 'log_update' log.id %}" class="btn btn-warning btn-sm">Редактировать</a>
+                        <!-- Кнопка удаления -->
+                        <button class="btn btn-danger btn-sm" onclick="deleteLog({{ log.id }})">Удалить</button>
+                    </td>
                 </tr>
             {% endfor %}
         </tbody>
@@ -114,6 +120,28 @@
                 }
             });
         });
+    </script>
+
+     <script>
+        function deleteLog(logId) {
+            if (confirm('Вы уверены, что хотите удалить эту запись?')) {
+                $.ajax({
+                    url: '{% url "log_delete" 0 %}'.replace('0', logId),
+                    type: 'DELETE',
+                    headers: {
+                        'X-CSRFToken': $('input[name="csrfmiddlewaretoken"]').val()
+                    },
+                    success: function(response) {
+                        $('#log-' + logId).remove();
+                        alert('Запись успешно удалена!');
+                    },
+                    error: function(xhr, status, error) {
+                        alert('Произошла ошибка при удалении записи.');
+                        console.error(error);
+                    }
+                });
+            }
+        }
     </script>
 
 </body>
