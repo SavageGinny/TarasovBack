@@ -131,18 +131,18 @@ def log_create(request):
         "category": category.id,
         "subcategory": subcategory.id,
         "amount": amount,
-        "comment": comment_id  # привязка к комментарии
+        "comment": comment_id  #
     }
 
     # Сериализация и сохранение записи
     serializer = PostLogSerializer(data=log_data)
     if serializer.is_valid():
-        with transaction.atomic():  # Оборачиваем в транзакцию
+        with transaction.atomic():
             serializer.save()
-        logger.debug("Log entry saved successfully")  # Логируем успешное сохранение
+        logger.debug("Log entry saved successfully")
         return Response(serializer.data, status=201)
 
-    logger.error(f"Validation error: {serializer.errors}")  # Логируем ошибку валидации
+    logger.error(f"Validation error: {serializer.errors}")
     return Response(serializer.errors, status=400)
 
 
