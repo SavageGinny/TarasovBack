@@ -18,8 +18,7 @@ dos2unix entrypoint.sh
 
 ## P.S - проект недопилен, так как я приболел сильно. То что сделано - сделано в попыхах за 4 часа. У меня в принципе есть другое тестовое:
 
-```
-https://github.com/SavageGinny/python_dev_Malay_Alexandr
-```
+[Тестовое с коннектом 2 баз](https://github.com/SavageGinny/python_dev_Malay_Alexandr)
+
 
 ### Тут явно дучше пожно просмотреть мои навыки. Там и тесты прописанны и в целом проект более полный
